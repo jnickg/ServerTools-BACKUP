@@ -56,7 +56,7 @@ public class ServerToolsBackup {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
 
-        STVersion.checkModuleVersion(this.getClass());
+        STVersion.checkVersion("@MIN_CORE@");
 
         File backupDir = new File(ServerTools.serverToolsDir, "backup");
         backupDir.mkdirs();

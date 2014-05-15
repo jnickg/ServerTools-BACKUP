@@ -7,7 +7,7 @@ def versionBuild = 0
 
 def minecraftVersion = '1.7.2'
 def forgeVersion = '10.12.1.1082'
-def STCoreVersion = '1.7.2-2.0.1.19'
+def STCoreVersion = '2.0.1.21'
 
 /* Constantes End */
 
@@ -24,6 +24,7 @@ if (System.getenv('BUILD_NUMBER') != null)
     versionBuild = System.getenv('BUILD_NUMBER')
 
 version = "${minecraftVersion}-${versionMajor}.${versionMinor}.${versionRev}.${versionBuild}"
+def actualVersion = "${versionMajor}.${versionMinor}.${versionRev}.${versionBuild}"
 
 apply plugin: 'forge'
 apply plugin: 'maven-publish'
@@ -40,6 +41,7 @@ minecraft {
     replace '@VERSION_REV@', versionRev
     replace '@VERSION_BUILD@', versionBuild
     replace '@MCVERSION@', minecraftVersion
+    replace '@MIN_CORE@', STCoreVersion
 
     if (project.hasProperty('st_keystore_cf'))
         replace '@FINGERPRINT@', project.st_keystore_cf
@@ -51,21 +53,21 @@ repositories {
 }
 
 dependencies {
-    compile "com.matthewprenger.servertools.core:ServerTools-CORE:${STCoreVersion}:deobf"
+    compile "com.matthewprenger.servertools.core:ServerTools-CORE:${minecraftVersion}-${STCoreVersion}:deobf"
 }
 
 sourceCompatibility = '1.7'
 targetCompatibility = '1.7'
 
 processResources {
-    inputs.property "version", project.version
+    inputs.property "version", actualVersion
     inputs.property "mcversion", minecraftVersion
 
     from(sourceSets.main.resources.srcDirs) {
         include '**/*.info'
         include '**/*.properties'
 
-        expand 'version': project.version, 'mcversion': minecraftVersion
+        expand 'version':actualVersion, 'mcversion': minecraftVersion
     }
 
     from(sourceSets.main.resources.srcDirs) {
