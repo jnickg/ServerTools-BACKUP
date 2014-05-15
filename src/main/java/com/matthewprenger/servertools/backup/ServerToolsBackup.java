@@ -20,6 +20,7 @@ import com.matthewprenger.servertools.core.STVersion;
 import com.matthewprenger.servertools.core.ServerTools;
 import com.matthewprenger.servertools.core.command.CommandManager;
 import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.event.FMLFingerprintViolationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerAboutToStartEvent;
 import cpw.mods.fml.common.event.FMLServerStartedEvent;
@@ -34,7 +35,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 
-@Mod(modid = Reference.MOD_ID, name = Reference.MOD_NAME, dependencies = Reference.DEPENDENCIES)
+@Mod(modid = Reference.MOD_ID, name = Reference.MOD_NAME, dependencies = Reference.DEPENDENCIES, acceptableRemoteVersions = "*", certificateFingerprint = Reference.FINGERPRINT)
 public class ServerToolsBackup {
 
     public static final Logger log = LogManager.getLogger(Reference.MOD_ID);
@@ -43,6 +44,14 @@ public class ServerToolsBackup {
     public static ServerToolsBackup instance;
 
     private BackupHandler backupHandler;
+
+    @Mod.EventHandler
+    public void invalidCert(FMLFingerprintViolationEvent event) {
+
+        log.warn("Invalid ServerTools Backup fingerprint detected: {}", event.fingerprints.toString());
+        log.warn("Expected: {}", event.expectedFingerprint);
+        log.warn("Unpredictable results my occur");
+    }
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
