@@ -1,0 +1,12 @@
+[
+{
+  "modid": "ServerTools|Backup",
+  "name": "ServerTools Backup",
+  "version": "${version}",
+  "description": "Backup addon for ServerTools",
+  "url": "https://github.com/matthewprenger/ServerTools",
+  "authors": ["matthewprenger"],
+  "credits": "Forge, FML, and MCP for making this project possible",
+  "dependencies": ["required-after:ServerTools"]
+}
+]
