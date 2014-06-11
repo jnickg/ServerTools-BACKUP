@@ -28,6 +28,7 @@ def actualVersion = "${versionMajor}.${versionMinor}.${versionRev}.${versionBuil
 
 apply plugin: 'forge'
 apply plugin: 'maven-publish'
+apply plugin: 'curseforge'
 
 group = 'com.matthewprenger.servertools.backup'
 archivesBaseName = 'ServerTools-BACKUP'
@@ -45,6 +46,16 @@ minecraft {
 
     if (project.hasProperty('st_keystore_cf'))
         replace '@FINGERPRINT@', project.st_keystore_cf
+}
+
+curse {
+    dependsOn 'changeLog', 'reobf'
+    onlyIf { return project.hasProperty('curseforge_key') }
+
+    if (project.hasProperty('curseforge_key')) apiKey = project.curseforge_key
+    projectId = '220713'
+    changelog = ''
+    releaseType = 'release'
 }
 
 repositories {
@@ -141,7 +152,7 @@ task changeLog(type: ChangelogTask) {
 }
 tasks.build.dependsOn('changeLog')
 
-task signJar(dependsOn: 'jar') {
+task signJar(dependsOn: 'reobf') {
     onlyIf { return project.hasProperty('st_keystore') }
 
     doLast {
@@ -157,4 +168,4 @@ task signJar(dependsOn: 'jar') {
 }
 tasks.build.dependsOn 'signJar'
 
-task release(dependsOn: [build, signJar, publish])
+task release(dependsOn: [build, signJar, publish, curse])
