@@ -54,6 +54,8 @@ public class BackupConfig {
             config = new Configuration(file);
         }
 
+        config.load();
+
         String category;
         Property prop;
         String[] array;
@@ -122,5 +124,8 @@ public class BackupConfig {
         prop = config.get(category, "autoBackupInterval", autoBackupInterval);
         prop.comment = "The interval in minutes for the auto backup to occur";
         autoBackupInterval = prop.getInt(autoBackupInterval);
+
+        if (config.hasChanged())
+            config.save();
     }
 }
