@@ -20,7 +20,6 @@ import com.matthewprenger.servertools.core.util.Util;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IProgressUpdate;
 import net.minecraft.world.WorldServer;
 
 import java.io.*;

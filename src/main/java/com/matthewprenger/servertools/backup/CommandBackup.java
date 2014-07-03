@@ -16,6 +16,7 @@
 
 package com.matthewprenger.servertools.backup;
 
+import com.matthewprenger.servertools.core.command.CommandLevel;
 import com.matthewprenger.servertools.core.command.ServerToolsCommand;
 import com.matthewprenger.servertools.core.util.Util;
 import net.minecraft.command.ICommandSender;
@@ -30,8 +31,8 @@ public class CommandBackup extends ServerToolsCommand {
     }
 
     @Override
-    public int getRequiredPermissionLevel() {
-        return 4;
+    public CommandLevel getCommandLevel() {
+        return CommandLevel.OP;
     }
 
     @Override
@@ -45,8 +46,8 @@ public class CommandBackup extends ServerToolsCommand {
         try {
             BackupHandler.instance.doBackup();
         } catch (IOException e) {
-            e.printStackTrace();
-            sender.addChatMessage(Util.getChatComponent("Backup Failed", EnumChatFormatting.RED));
+            ServerToolsBackup.log.warn("Backup failed", e);
+            sender.addChatMessage(Util.getChatComponent("Backup Failed: " + e.getMessage(), EnumChatFormatting.RED));
         }
 
         sender.addChatMessage(Util.getChatComponent("Started Backup", EnumChatFormatting.GREEN));

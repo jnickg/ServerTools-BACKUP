@@ -75,8 +75,7 @@ public class BackupHandler {
                         new Backup(worldDir, backupDir), interval, interval
                 );
             } catch (IOException e) {
-                e.printStackTrace();
-                ServerToolsBackup.log.fatal("Failed to initialize autobackup");
+                ServerToolsBackup.log.fatal("Failed to initialize autobackup", e);
             }
         }
 
@@ -226,7 +225,7 @@ public class BackupHandler {
             EntityPlayerMP playerMP = (EntityPlayerMP) obj;
 
             if (playerMP != null) {
-                if (BackupConfig.sendBackupMessageToOps && MinecraftServer.getServer().getConfigurationManager().isPlayerOpped(playerMP.getCommandSenderName()))
+                if (BackupConfig.sendBackupMessageToOps && MinecraftServer.getServer().getConfigurationManager().func_152596_g(playerMP.getGameProfile()))
                     playerMP.addChatComponentMessage(component);
                 else if (BackupConfig.sendBackupMessageToUsers)
                     playerMP.addChatComponentMessage(component);
