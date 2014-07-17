@@ -17,40 +17,34 @@
 package com.matthewprenger.servertools.backup;
 
 import com.google.common.base.Strings;
+import com.matthewprenger.servertools.backup.config.ConfigurationHandler;
 import com.matthewprenger.servertools.core.util.FileUtils;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.IChatComponent;
+import net.minecraft.world.MinecraftException;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Timer;
 
 public class BackupHandler {
 
     private static final String FILE_EXTENSION = ".zip";
-    private static final BackupFileNameFilter backupFileNameFilter = new BackupFileNameFilter();
 
-    protected File backupDir;
-    protected File worldDir;
+    protected static File backupDir;
 
-    protected Timer backupTimer;
-
-    public static BackupHandler instance;
-
-    public BackupHandler() {
+    public static void init() {
 
         ServerToolsBackup.log.info("Initializing ServerTools Backup Handler");
 
-        if (Strings.isNullOrEmpty(BackupConfig.backupDirPath))
+        if (Strings.isNullOrEmpty(ConfigurationHandler.backupDirPath))
             throw new IllegalArgumentException("The configured backup path is not set");
 
-        backupDir = new File(BackupConfig.backupDirPath);
-        worldDir = DimensionManager.getWorld(0).getChunkSaveLocation();
+        backupDir = new File(ConfigurationHandler.backupDirPath);
 
         if (backupDir.exists() && backupDir.isFile())
             throw new IllegalArgumentException("File exists with name of configured backup path, can't create backup directory");
@@ -58,41 +52,8 @@ public class BackupHandler {
         ServerToolsBackup.log.trace(String.format("Backup Directory: %s", backupDir.getAbsolutePath()));
 
         backupDir.mkdirs();
-
-        backupTimer = new Timer(true);
-
-        if (BackupConfig.enableAutoBackup) {
-
-            ServerToolsBackup.log.info(String.format("Initializing ServerTools AutoBackup to run every %s minutes", BackupConfig.autoBackupInterval));
-
-            int interval = BackupConfig.autoBackupInterval * 60 * 1000;
-
-            if (interval <= 0)
-                throw new IllegalArgumentException("Autobackup interval must be greater than 0");
-
-            try {
-                backupTimer.scheduleAtFixedRate(
-                        new Backup(worldDir, backupDir), interval, interval
-                );
-            } catch (IOException e) {
-                ServerToolsBackup.log.fatal("Failed to initialize autobackup", e);
-            }
-        }
-
-        instance = this;
     }
 
-    /**
-     * Run the server backup
-     *
-     * @throws java.io.IOException if an IOException happened
-     */
-    public void doBackup() throws IOException {
-
-        backupTimer.schedule(
-                new Backup(worldDir, backupDir), 0
-        );
-    }
 
     /**
      * Get the backup filename with wildcards replaced for the current date and time
@@ -110,7 +71,7 @@ public class BackupHandler {
         Integer minute = cal.get(Calendar.MINUTE);
         Integer second = cal.get(Calendar.SECOND);
 
-        return BackupConfig.backupFileNameTemplate.replaceAll("%YEAR", year.toString())
+        return ConfigurationHandler.filenameTemplate.replaceAll("%YEAR", year.toString())
                 .replaceAll("%MONTH", month.toString())
                 .replaceAll("%DAY", day.toString())
                 .replaceAll("%HOUR", hour.toString())
@@ -118,93 +79,130 @@ public class BackupHandler {
                 .replaceAll("%SECOND", second.toString()) + FILE_EXTENSION;
     }
 
-    /**
-     * Check the backup directories for files older than the maximum backup age
-     * set in the config and deletes them.
-     *
-     * Does nothing if config setting is set to -1
-     */
+    public static void doBackups() {
+        //TODO
+    }
+
+    public static void backupWorld(int dim) {
+
+        WorldServer worldServer = DimensionManager.getWorld(dim);
+
+        if (worldServer == null) {
+            ServerToolsBackup.log.warn("Not backing up dimension {}, it doesn't exist!", dim);
+            return;
+        }
+
+        File dimfolder = new File(backupDir, "DIM_" + dim);
+        dimfolder.mkdirs();
+        File backupFile = new File(dimfolder, getBackupName());
+
+        WorldBackup worldBackup = new WorldBackup(worldServer, backupFile);
+
+        try {
+            worldServer.levelSaving = false;
+            worldServer.saveAllChunks(true, null);
+            worldServer.levelSaving = true;
+
+        } catch (MinecraftException e) {
+            ServerToolsBackup.log.warn("Failed to save world", e);
+        }
+
+        worldBackup.start();
+    }
+
     public void checkForOldBackups() {
 
-        if (BackupConfig.backupLifespanDays == -1)
+        if (ConfigurationHandler.backupLifespan == -1)
             return;
 
-        ServerToolsBackup.log.info("Checking backup directory for old backups");
+        ServerToolsBackup.log.info("Checking backup directories for old backups");
 
-        for (File file : backupDir.listFiles(backupFileNameFilter)) {
-            if (file.isFile()) {
-                int age = (int) ((new Date().getTime() - file.lastModified()) / 24 / 60 / 60 / 1000);
+        for (File dir : backupDir.listFiles()) {
+            if (dir.isFile())
+                continue;
 
-                ServerToolsBackup.log.trace(String.format("Found backup file %s; %s days old", file.getName(), age));
+            for (File file : dir.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(FILE_EXTENSION);
+                }
+            })) {
+                if (file.isFile()) {
+                    int age = (int) ((new Date().getTime() - file.lastModified()) / 24 / 60 / 60 / 1000);
 
-                if (age > BackupConfig.backupLifespanDays) {
-                    ServerToolsBackup.log.info(String.format("Deleting old backup file: %s", file.getName()));
-                    if (file.delete())
-                        ServerToolsBackup.log.trace(String.format("Successfully deleted file %s", file.getName()));
-                    else
-                        ServerToolsBackup.log.warn(String.format("Failed to delete file %s", file.getName()));
+                    ServerToolsBackup.log.trace(String.format("Found backup file %s; %s days old", file.getName(), age));
+
+                    if (age > ConfigurationHandler.backupLifespan) {
+                        ServerToolsBackup.log.info(String.format("Deleting old backup file: %s", file.getName()));
+                        if (file.delete())
+                            ServerToolsBackup.log.trace(String.format("Successfully deleted file %s", file.getName()));
+                        else
+                            ServerToolsBackup.log.warn(String.format("Failed to delete file %s", file.getName()));
+                    }
                 }
             }
         }
     }
 
-    /**
-     * Check the size of the backup directory and delete the
-     * oldest file if the directory is larger than the config option
-     */
     public void checkBackupDirSize() {
 
-        if (BackupConfig.backupDirMaxSize == -1)
+        if (ConfigurationHandler.backupDirMaxSize == -1)
             return;
 
-        ServerToolsBackup.log.trace("Checking size of the backup directory");
+        for (File file : backupDir.listFiles()) {
 
-        ServerToolsBackup.log.trace(String.format("Backup directory size: %s MB", FileUtils.getFolderSize(backupDir) / org.apache.commons.io.FileUtils.ONE_MB));
+            if (file.isFile())
+                continue;
 
-        while (FileUtils.getFolderSize(backupDir) / org.apache.commons.io.FileUtils.ONE_MB > BackupConfig.backupDirMaxSize) {
+            ServerToolsBackup.log.trace("Checking size of the backup directory");
 
-            File oldestFile = FileUtils.getOldestFile(backupDir);
+            ServerToolsBackup.log.trace(String.format("Backup directory size: %s MB", FileUtils.getFolderSize(file) / org.apache.commons.io.FileUtils.ONE_MB));
 
-            if (oldestFile != null) {
-                ServerToolsBackup.log.trace(String.format("Deleting oldest file: %s", oldestFile.getName()));
-                oldestFile.delete();
+            while (FileUtils.getFolderSize(file) / org.apache.commons.io.FileUtils.ONE_MB > ConfigurationHandler.backupDirMaxSize) {
+
+                File oldestFile = FileUtils.getOldestFile(file);
+
+                if (oldestFile != null) {
+                    ServerToolsBackup.log.trace(String.format("Deleting oldest file: %s", oldestFile.getName()));
+                    oldestFile.delete();
+                }
             }
         }
     }
 
-    /**
-     * Check the number of backups in the backup directory and delete old ones if necessary
-     */
     public void checkNumberBackups() {
 
-        if (BackupConfig.backupMaxNumber == -1)
+        if (ConfigurationHandler.backupMaxNumber == -1)
             return;
 
-        ServerToolsBackup.log.trace("Checking number of backups in backup directory");
+        for (File dir : backupDir.listFiles()) {
 
-        ServerToolsBackup.log.trace(String.format("%s backups exist", getNumberBackups()));
+            ServerToolsBackup.log.trace("Checking number of backups in backup directory");
 
-        while (getNumberBackups() > BackupConfig.backupMaxNumber) {
-            File oldestFile = FileUtils.getOldestFile(backupDir);
-            if (oldestFile != null) {
-                ServerToolsBackup.log.info(String.format("Deleting oldest backup file: %s", oldestFile.getName()));
-                oldestFile.delete();
+            ServerToolsBackup.log.trace(String.format("%s backups exist", getNumberBackups(dir)));
+
+            while (getNumberBackups(dir) > ConfigurationHandler.backupMaxNumber) {
+                File oldestFile = FileUtils.getOldestFile(dir);
+                if (oldestFile != null) {
+                    ServerToolsBackup.log.info(String.format("Deleting oldest backup file: %s", oldestFile.getName()));
+                    oldestFile.delete();
+                }
             }
         }
     }
 
-    /**
-     * Get the number of backups in the backup directory
-     *
-     * @return the number of backups
-     */
-    private int getNumberBackups() {
+    private static int getNumberBackups(File dir) {
 
         int number = 0;
 
-        if (backupDir.exists() && backupDir.isDirectory()) {
+        if (dir.exists() && dir.isDirectory()) {
 
-            File[] files = backupDir.listFiles(backupFileNameFilter);
+            File[] files = dir.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(FILE_EXTENSION);
+                }
+            });
 
             for (File ignored : files) {
                 number++;
@@ -214,34 +212,26 @@ public class BackupHandler {
         return number;
     }
 
-    /**
-     * Send a backup related message to all users that should get backup messages
-     *
-     * @param component a {@link net.minecraft.util.ChatComponentText} to send
-     */
     public static void sendBackupMessage(IChatComponent component) {
 
         for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
             EntityPlayerMP playerMP = (EntityPlayerMP) obj;
 
             if (playerMP != null) {
-                if (BackupConfig.sendBackupMessageToOps && MinecraftServer.getServer().getConfigurationManager().func_152596_g(playerMP.getGameProfile()))
+                if (ConfigurationHandler.sendMessagesToOps && MinecraftServer.getServer().getConfigurationManager().func_152596_g(playerMP.getGameProfile()))
                     playerMP.addChatComponentMessage(component);
-                else if (BackupConfig.sendBackupMessageToUsers)
+                else if (ConfigurationHandler.sendMessagesToUsers)
                     playerMP.addChatComponentMessage(component);
-                else if (BackupConfig.backupMessageWhitelist.contains(playerMP.getCommandSenderName()))
-                    playerMP.addChatComponentMessage(component);
+                else {
+                    for (String user : ConfigurationHandler.messageWhiteList) {
+                        if (user.equalsIgnoreCase(playerMP.getCommandSenderName())) {
+                            playerMP.addChatComponentMessage(component);
+                        }
+                    }
+                }
             }
         }
 
         MinecraftServer.getServer().addChatMessage(component);
-    }
-
-    private static class BackupFileNameFilter implements FilenameFilter {
-
-        @Override
-        public boolean accept(File dir, String name) {
-            return name.endsWith(FILE_EXTENSION);
-        }
     }
 }

@@ -16,6 +16,7 @@
 
 package com.matthewprenger.servertools.backup;
 
+import com.matthewprenger.servertools.backup.config.ConfigurationHandler;
 import com.matthewprenger.servertools.core.STVersion;
 import com.matthewprenger.servertools.core.ServerTools;
 import com.matthewprenger.servertools.core.command.CommandManager;
@@ -55,7 +56,13 @@ public class ServerToolsBackup {
         File backupDir = new File(ServerTools.serverToolsDir, "backup");
         backupDir.mkdirs();
 
-        BackupConfig.init(new File(backupDir, "backup.cfg"));
+        File old = new File(backupDir, "backup.cfg");
+        if (old.exists()) {
+            log.info("Detected old config file, deleting");
+            old.delete();
+        }
+
+        ConfigurationHandler.init(new File(backupDir, "backups.cfg"));
     }
 
     @Mod.EventHandler

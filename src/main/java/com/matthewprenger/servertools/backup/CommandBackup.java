@@ -21,8 +21,7 @@ import com.matthewprenger.servertools.core.command.ServerToolsCommand;
 import com.matthewprenger.servertools.core.util.Util;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.util.EnumChatFormatting;
-
-import java.io.IOException;
+import net.minecraftforge.common.DimensionManager;
 
 public class CommandBackup extends ServerToolsCommand {
 
@@ -43,11 +42,8 @@ public class CommandBackup extends ServerToolsCommand {
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
 
-        try {
-            BackupHandler.instance.doBackup();
-        } catch (IOException e) {
-            ServerToolsBackup.log.warn("Backup failed", e);
-            sender.addChatMessage(Util.getChatComponent("Backup Failed: " + e.getMessage(), EnumChatFormatting.RED));
+        for (Integer i : DimensionManager.getIDs()) {
+            BackupHandler.backupWorld(i);
         }
 
         sender.addChatMessage(Util.getChatComponent("Started Backup", EnumChatFormatting.GREEN));

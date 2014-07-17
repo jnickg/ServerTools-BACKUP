@@ -23,7 +23,7 @@ import net.minecraft.util.ChunkCoordinates;
 import net.minecraft.util.IChatComponent;
 import net.minecraft.world.World;
 
-public enum  STBCommandSender implements ICommandSender {
+public enum STBCommandSender implements ICommandSender {
     INSTANCE {
         @Override
         public String getCommandSenderName() {

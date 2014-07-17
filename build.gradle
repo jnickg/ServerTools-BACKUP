@@ -35,7 +35,7 @@ archivesBaseName = 'ServerTools-BACKUP'
 
 minecraft {
     version = minecraftVersion + '-' + forgeVersion
-    assetDir = 'run/assets'
+    runDir = 'run'
 
     replace '@VERSION_MAJOR@', versionMajor
     replace '@VERSION_MINOR@', versionMinor

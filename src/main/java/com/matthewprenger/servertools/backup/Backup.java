@@ -16,20 +16,8 @@
 
 package com.matthewprenger.servertools.backup;
 
-import com.matthewprenger.servertools.core.util.Util;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.world.WorldServer;
-
-import java.io.*;
-import java.net.URI;
-import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
-class Backup extends TimerTask {
-
+class Backup {
+/*
     private final File sourceDir;
     private final File backupDir;
 
@@ -142,4 +130,5 @@ class Backup extends TimerTask {
             copy(in, out);
         }
     }
+    */
 }
