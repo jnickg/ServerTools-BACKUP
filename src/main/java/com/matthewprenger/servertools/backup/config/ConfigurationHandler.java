@@ -12,7 +12,7 @@ public class ConfigurationHandler {
     private static final Logger log = LogManager.getLogger(ConfigurationHandler.class.getSimpleName());
 
     public static String backupDirPath = "backup";
-    public static String filenameTemplate = "%MONTH-%DAY-%YEAR_%HOUR-%MINUTE-%SECOND";
+//    public static String filenameTemplate = "%MONTH-%DAY-%YEAR_%HOUR-%MINUTE-%SECOND";
     public static int[] dimensionBlackList = new int[]{};
     public static boolean backupEmptyWorlds = false;
     public static String[] fileBlackList = new String[]{"level.dat_new"};
@@ -57,10 +57,6 @@ public class ConfigurationHandler {
             prop = config.get(category, "Backup Directory", backupDirPath);
             prop.comment = "The path to the directory where backups are stored";
             backupDirPath = prop.getString();
-
-            prop = config.get(category, "Filename Template", filenameTemplate);
-            prop.comment = "The template for backup filenames. Wildcards are: %MONTH %DAY %YEAR %HOUR %MINUTE %SECOND";
-            filenameTemplate = prop.getString();
 
             prop = config.get(category, "File Blacklist", fileBlackList);
             prop.comment = "A list of filenames to not back up";

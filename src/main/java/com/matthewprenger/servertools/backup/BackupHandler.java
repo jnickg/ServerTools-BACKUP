@@ -28,6 +28,7 @@ import net.minecraftforge.common.DimensionManager;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -62,25 +63,18 @@ public class BackupHandler {
      */
     public static String getBackupName() {
 
-        Calendar cal = Calendar.getInstance();
-
-        Integer year = cal.get(Calendar.YEAR);
-        Integer month = cal.get(Calendar.MONTH) + 1; // WHY DOES JAVA THINK JANUARY IS 0 ?!?!?
-        Integer day = cal.get(Calendar.DATE);
-        Integer hour = cal.get(Calendar.HOUR_OF_DAY);
-        Integer minute = cal.get(Calendar.MINUTE);
-        Integer second = cal.get(Calendar.SECOND);
-
-        return ConfigurationHandler.filenameTemplate.replaceAll("%YEAR", year.toString())
-                .replaceAll("%MONTH", month.toString())
-                .replaceAll("%DAY", day.toString())
-                .replaceAll("%HOUR", hour.toString())
-                .replaceAll("%MINUTE", minute.toString())
-                .replaceAll("%SECOND", second.toString()) + FILE_EXTENSION;
+        return new SimpleDateFormat("MM-dd-yyyy_HH:mm:ss").format(Calendar.getInstance().getTime());
     }
 
     public static void doBackups() {
-        //TODO
+
+        outer:
+        for (int dimId : DimensionManager.getIDs()) {
+            for (int blackListed : ConfigurationHandler.dimensionBlackList) {
+                if (dimId == blackListed)
+                    continue outer;
+            }
+        }
     }
 
     public static void backupWorld(int dim) {
@@ -110,7 +104,7 @@ public class BackupHandler {
         worldBackup.start();
     }
 
-    public void checkForOldBackups() {
+    public static void checkForOldBackups() {
 
         if (ConfigurationHandler.backupLifespan == -1)
             return;
@@ -144,7 +138,7 @@ public class BackupHandler {
         }
     }
 
-    public void checkBackupDirSize() {
+    public static void checkBackupDirSize() {
 
         if (ConfigurationHandler.backupDirMaxSize == -1)
             return;
@@ -170,7 +164,7 @@ public class BackupHandler {
         }
     }
 
-    public void checkNumberBackups() {
+    public static void checkNumberBackups() {
 
         if (ConfigurationHandler.backupMaxNumber == -1)
             return;

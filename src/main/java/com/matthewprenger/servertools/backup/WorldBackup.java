@@ -68,6 +68,7 @@ public class WorldBackup implements IBackup {
         try {
 
             flag = worldServer.levelSaving;
+            worldServer.levelSaving = true;
 
             zipDirectory(sourceDir, destinationFile, ignoredDirs, ignoredFiles); // Do the actual backup
 
@@ -75,6 +76,10 @@ public class WorldBackup implements IBackup {
             ServerToolsBackup.log.error("Failed to do backup of DIM: " + worldServer.provider.dimensionId, e);
         } finally {
             worldServer.levelSaving = flag;
+
+            BackupHandler.checkBackupDirSize();
+            BackupHandler.checkNumberBackups();
+            BackupHandler.checkForOldBackups();
         }
     }
 
