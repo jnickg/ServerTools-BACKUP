@@ -38,6 +38,9 @@ public class BackupConfig {
     public static final Set<String> backupMessageWhitelist = new HashSet<>();
     public static boolean enableAutoBackup = false;
     public static int autoBackupInterval = 1440;
+    public static String backupWarningMessage = "Warning: Backup starting soon.";
+    public static String backupStartMessage = "Backup starting...";
+    public static String backupFinishMessage = "Backup complete.";
 
     public static void init(File file) {
 
@@ -124,6 +127,18 @@ public class BackupConfig {
         prop = config.get(category, "autoBackupInterval", autoBackupInterval);
         prop.comment = "The interval in minutes for the auto backup to occur";
         autoBackupInterval = prop.getInt(autoBackupInterval);
+        
+        prop = config.get(category, "autoBackupWarningMsg", backupWarningMessage);
+        prop.comment = "A warning message to be displayed to users prior to starting a backup.";
+        backupDirPath = prop.getString();
+        
+        prop = config.get(category, "autoBackupStartMsg", backupStartMessage);
+        prop.comment = "A custom message to be displayed to users when starting a backup.";
+        backupDirPath = prop.getString();
+        
+        prop = config.get(category, "autoBackupFinishMsg", backupFinishMessage);
+        prop.comment = "A custom message to be displayed to users when a backup completes.";
+        backupDirPath = prop.getString();
 
         if (config.hasChanged())
             config.save();

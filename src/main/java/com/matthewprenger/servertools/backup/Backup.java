@@ -54,9 +54,11 @@ class Backup extends TimerTask {
     public void run() {
 
         String backupFileName = BackupHandler.getBackupName();
+        String backupStartMsg = BackupHandler.getBackupStartMessage();
+        String backupFinishMsg = BackupHandler.getBackupFinishMessage();
 
         ServerToolsBackup.log.info(String.format("Starting backup %s", backupFileName));
-        BackupHandler.sendBackupMessage(new ChatComponentText("Starting Server Backup"));
+        BackupHandler.sendBackupMessage(new ChatComponentText(String.format("%s", backupStartMsg)));
 
         Map<Integer, Boolean> levelSavingDisabled = new HashMap<>(MinecraftServer.getServer().worldServers.length);
 
@@ -77,7 +79,7 @@ class Backup extends TimerTask {
                 worldServer.levelSaving = levelSavingDisabled.get(worldServer.provider.dimensionId);
             }
 
-            BackupHandler.sendBackupMessage(Util.getChatComponent("Server Backup Finished", EnumChatFormatting.GREEN));
+            BackupHandler.sendBackupMessage(Util.getChatComponent(String.format("%s",backupFinishMsg), EnumChatFormatting.GREEN));
             ServerToolsBackup.log.info("Backup completed successfully");
 
         } catch (Exception e) {

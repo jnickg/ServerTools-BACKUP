@@ -118,6 +118,16 @@ public class BackupHandler {
                 .replaceAll("%SECOND", second.toString()) + FILE_EXTENSION;
     }
 
+    
+    public static String getBackupStartMessage() {
+    	return BackupConfig.backupStartMessage;
+    }
+    public static String getBackupFinishMessage() {
+    	return BackupConfig.backupFinishMessage;
+    }
+    public static String getBackupwarningMessage() {
+    	return BackupConfig.backupWarningMessage;
+    }
     /**
      * Check the backup directories for files older than the maximum backup age
      * set in the config and deletes them.
